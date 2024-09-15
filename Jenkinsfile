@@ -7,8 +7,10 @@ properties([
         choice(
             choices: ['plan', 'apply', 'destroy'], 
             name: 'Terraform_Action'
-        )])
+        )
+    ])
 ])
+
 pipeline {
     agent any
     stages {
@@ -17,34 +19,39 @@ pipeline {
                 sh 'echo Preparing'
             }
         }
-       stage('Checkout from Git') {
+
+        stage('Checkout from Git') {
             steps {
                 git credentialsId: 'Github', branch: 'main', url: "https://github.com/deepak-kumar-ms/eks-terraform.git"
             }
-      }
+        }
+
         stage('Init') {
             steps {
                 withAWS(credentials: 'aws-creds', region: 'us-east-1') {
-                sh 'terraform -chdir=eks/ init'
+                    // Using the '-reconfigure' option to resolve backend changes
+                    sh 'terraform -chdir=eks/ init -reconfigure'
                 }
             }
         }
+
         stage('Validate') {
             steps {
                 withAWS(credentials: 'aws-creds', region: 'us-east-1') {
-                sh 'terraform -chdir=eks/ validate'
+                    sh 'terraform -chdir=eks/ validate'
                 }
             }
         }
+
         stage('Action') {
             steps {
                 withAWS(credentials: 'aws-creds', region: 'us-east-1') {
-                    script {    
+                    script {
                         if (params.Terraform_Action == 'plan') {
                             sh "terraform -chdir=eks/ plan -var-file=${params.Environment}.tfvars"
-                        }   else if (params.Terraform_Action == 'apply') {
+                        } else if (params.Terraform_Action == 'apply') {
                             sh "terraform -chdir=eks/ apply -var-file=${params.Environment}.tfvars -auto-approve"
-                        }   else if (params.Terraform_Action == 'destroy') {
+                        } else if (params.Terraform_Action == 'destroy') {
                             sh "terraform -chdir=eks/ destroy -var-file=${params.Environment}.tfvars -auto-approve"
                         } else {
                             error "Invalid value for Terraform_Action: ${params.Terraform_Action}"
