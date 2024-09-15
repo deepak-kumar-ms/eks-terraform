@@ -19,7 +19,7 @@ pipeline {
         }
        stage('Checkout from Git') {
             steps {
-                git credentialsId: 'GitHub', branch: 'main', url: "https://github.com/fleetman-k8s-ci/eks-terraform.git"
+                git credentialsId: 'Github', branch: 'main', url: "https://github.com/deepak-kumar-ms/eks-terraform.git"
             }
       }
         stage('Init') {
